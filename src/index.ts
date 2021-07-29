@@ -1,8 +1,15 @@
 import { Router } from 'worktop'
 import { listen } from 'worktop/cache'
+import * as CORS from 'worktop/cors'
 import { loadTimeSeries } from './timeseries'
 
 const API = new Router()
+
+API.prepare = CORS.preflight({
+  origin: '*',
+  headers: ['Cache-Control', 'Content-Type', 'X-Count'],
+  methods: ['GET', 'HEAD', 'PATCH'],
+})
 
 API.add('GET', '/:symbol', async (req, res) => {
   const { symbol } = req.params
