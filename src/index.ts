@@ -12,7 +12,7 @@ API.add('GET', '/:symbol', async (req, res) => {
   }
 
   const full = !!req.query.get('full')
-  const series = await loadTimeSeries(symbol, full)
+  const series = await loadTimeSeries(symbol.toUpperCase(), full)
   res.send(200, series)
 })
 
