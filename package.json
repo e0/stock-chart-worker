@@ -1,7 +1,7 @@
 {
   "name": "stock-chart-worker",
   "version": "1.0.0",
-  "description": "Cloudflare worker for generating stock chart images",
+  "description": "Cloudflare worker for stock timeseries data.",
   "main": "dist/worker.js",
   "scripts": {
     "build": "webpack",

@@ -1,6 +1,6 @@
 # `stock-chart-worker`
 
-Cloudflare worker for generating stock chart images.
+Cloudflare worker for stock timeseries data.
 
 ## Prerequisites
 
