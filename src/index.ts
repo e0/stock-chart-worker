@@ -45,7 +45,7 @@ API.add('GET', '/images/:symbol', async (req, res) => {
   }
 
   const image = await getImage(symbol.toUpperCase())
-  res.send(200, image)
+  image ? res.send(200, image) : res.send(404)
 })
 
 listen(API.run)
