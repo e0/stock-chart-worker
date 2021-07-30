@@ -32,7 +32,7 @@ API.add('POST', '/images/:symbol', async (req, res) => {
     return res.send(400, 'Error parsing request')
   }
 
-  await uploadImage(symbol, image)
+  await uploadImage(symbol.toUpperCase(), image)
 
   res.send(200)
 })
@@ -44,7 +44,7 @@ API.add('GET', '/images/:symbol', async (req, res) => {
     return res.send(400, 'Error parsing request')
   }
 
-  const image = await getImage(symbol)
+  const image = await getImage(symbol.toUpperCase())
   res.send(200, image)
 })
 
