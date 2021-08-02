@@ -1,7 +1,7 @@
 import { Router } from 'worktop'
 import { listen } from 'worktop/cache'
 import * as CORS from 'worktop/cors'
-import { loadTimeSeries } from './timeseries'
+import { loadChartData } from './chartData'
 import { uploadImage, getImage } from './image'
 
 const API = new Router()
@@ -12,7 +12,7 @@ API.prepare = CORS.preflight({
   methods: ['GET', 'HEAD', 'PATCH'],
 })
 
-API.add('GET', '/timeseries/:symbol', async (req, res) => {
+API.add('GET', '/chart-data/:symbol', async (req, res) => {
   const { symbol } = req.params
 
   if (!symbol) {
@@ -20,8 +20,8 @@ API.add('GET', '/timeseries/:symbol', async (req, res) => {
   }
 
   const full = !!req.query.get('full')
-  const series = await loadTimeSeries(symbol.toUpperCase(), full)
-  res.send(200, series)
+  const chartData = await loadChartData(symbol.toUpperCase(), full)
+  res.send(200, chartData)
 })
 
 API.add('POST', '/images/:symbol', async (req, res) => {
