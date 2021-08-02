@@ -13,9 +13,9 @@ const calculateAdrPct = (series: any) => {
 
 const calculateDollarVol = (series: any) => {
   const candles = series.slice(series.length - 5, series.length)
-  const dollar = candles.reduce((total: number, d: any) => total + d[3], 0)
-  const vol = candles.reduce((total: number, d: any) => total + d[4], 0)
-  const dollarVol = (dollar * vol) / 5
+  const dollar = candles.reduce((total: number, d: any) => total + d[3], 0) / 5
+  const vol = candles.reduce((total: number, d: any) => total + d[4], 0) / 5
+  const dollarVol = dollar * vol
   return formatNumber(dollarVol)
 }
 
