@@ -4,12 +4,6 @@ declare const STOCK_CHART_KV: KVNamespace
 
 const uploadImage = async (symbol: string, image: string) => {
   const key = `image-${symbol}`
-  const cached = await STOCK_CHART_KV.get(key)
-
-  if (cached) {
-    return
-  }
-
   await STOCK_CHART_KV.put(key, image, {
     expirationTtl: secondsUntilNextWeekday(),
   })
