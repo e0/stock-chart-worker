@@ -19,32 +19,38 @@ API.add('GET', '/chart-data/:symbol', async (req, res) => {
     return res.send(400, 'Error parsing request')
   }
 
-  const full = !!req.query.get('full')
-  const chartData = await loadChartData(symbol.toUpperCase(), full)
+  const chartData = await loadChartData(symbol.toUpperCase())
   res.send(200, chartData)
 })
 
-API.add('POST', '/images/:symbol', async (req, res) => {
-  const { symbol } = req.params
+const validTimeFrames = ['daily', 'weekly', 'monthly']
+
+API.add('POST', '/images/:symbol/:timeframe', async (req, res) => {
+  const { symbol, timeframe } = req.params
+  const s = symbol && symbol.toUpperCase()
+  const t = symbol && timeframe.toLowerCase()
+
   const { image }: any = await req.body()
 
-  if (!symbol || !image) {
+  if (!s || !t || !validTimeFrames.includes(t) || !image) {
     return res.send(400, 'Error parsing request')
   }
 
-  await uploadImage(symbol.toUpperCase(), image)
+  await uploadImage(s, t, image)
 
   res.send(200)
 })
 
-API.add('GET', '/images/:symbol', async (req, res) => {
-  const { symbol } = req.params
+API.add('GET', '/images/:symbol/:timeframe', async (req, res) => {
+  const { symbol, timeframe } = req.params
+  const s = symbol && symbol.toUpperCase()
+  const t = symbol && timeframe.toLowerCase()
 
-  if (!symbol) {
+  if (!s || !t || !validTimeFrames.includes(t)) {
     return res.send(400, 'Error parsing request')
   }
 
-  const image = await getImage(symbol.toUpperCase())
+  const image = await getImage(s, t)
   image ? res.send(200, image) : res.send(404)
 })
 

@@ -1,4 +1,4 @@
-import { roundTo, secondsUntilNextWeekday, formatNumber } from './util'
+import { roundTo, secondsUntilNextWeekday, formatNumber, getWeek } from './util'
 
 declare const STOCK_CHART_KV: KVNamespace
 declare const AV_API_KEY: string
@@ -19,18 +19,14 @@ const calculateDollarVol = (series: any) => {
   return formatNumber(dollarVol)
 }
 
-const loadChartData = async (symbol: string, full?: boolean) => {
+const loadChartData = async (symbol: string) => {
   const cached = await STOCK_CHART_KV.get(symbol)
 
   if (cached) {
     return JSON.parse(cached)
   }
 
-  let url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol=${symbol}&apikey=${AV_API_KEY}`
-  if (full) {
-    url = `${url}&outputsize=full`
-  }
-
+  const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol=${symbol}&outputsize=full&apikey=${AV_API_KEY}`
   const response = await fetch(url)
   const data = await response.json()
   const timeSeriesDaily = data['Time Series (Daily)']
@@ -39,10 +35,15 @@ const loadChartData = async (symbol: string, full?: boolean) => {
     .map((d) => ({ ...timeSeriesDaily[d], date: new Date(d) }))
     .reverse()
 
-  const formattedSeriesDaily = []
+  const daily = []
+  const weekly = []
+  const monthly = []
+
+  let week, month
 
   // 1. loop through the daily timeseries
   // 2. reformat data
+  // 3. populate daily, weekly, and monthly series
   for (let d of seriesDaily) {
     const close = roundTo(parseFloat(d['4. close']))
     const ratio = roundTo(parseFloat(d['5. adjusted close']) / close)
@@ -55,13 +56,53 @@ const loadChartData = async (symbol: string, full?: boolean) => {
     const t = d.date.getTime()
 
     const dailyData = [o, h, l, c, v, t]
-    formattedSeriesDaily.push(dailyData)
+    daily.push(dailyData)
+
+    const currentWeek = getWeek(d.date)
+    if (currentWeek !== week) {
+      // if new week
+      weekly[weekly.length] = dailyData
+      week = currentWeek
+    } else {
+      // if same week
+      const weekData: any = weekly[weekly.length - 1]
+      weekly[weekly.length - 1] = [
+        weekData[0],
+        h > weekData[1] ? h : weekData[1],
+        l < weekData[2] ? l : weekData[2],
+        c,
+        weekData[4] + v,
+        t,
+      ]
+    }
+
+    const currentMonth = d.date.getMonth()
+    if (currentMonth !== month) {
+      // if new month
+      monthly[monthly.length] = dailyData
+      month = currentMonth
+    } else {
+      // if same month
+      const monthData: any = monthly[monthly.length - 1]
+      monthly[monthly.length - 1] = [
+        monthData[0],
+        h > monthData[1] ? h : monthData[1],
+        l < monthData[2] ? l : monthData[2],
+        c,
+        monthData[4] + v,
+        t,
+      ]
+    }
   }
 
   const chartData = {
-    timeseries: formattedSeriesDaily,
-    adrPct: calculateAdrPct(formattedSeriesDaily),
-    dollarVol: calculateDollarVol(formattedSeriesDaily),
+    timeseries: {
+      daily,
+      weekly,
+      monthly,
+    },
+    adrPct: calculateAdrPct(daily),
+    dollarVol: calculateDollarVol(daily),
   }
 
   await STOCK_CHART_KV.put(symbol, JSON.stringify(chartData), {
