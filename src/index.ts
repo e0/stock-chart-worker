@@ -28,7 +28,7 @@ const validTimeFrames = ['daily', 'weekly', 'monthly']
 API.add('POST', '/images/:symbol/:timeframe', async (req, res) => {
   const { symbol, timeframe } = req.params
   const s = symbol && symbol.toUpperCase()
-  const t = symbol && timeframe.toLowerCase()
+  const t = timeframe && timeframe.toLowerCase()
 
   const { image }: any = await req.body()
 
@@ -44,7 +44,7 @@ API.add('POST', '/images/:symbol/:timeframe', async (req, res) => {
 API.add('GET', '/images/:symbol/:timeframe', async (req, res) => {
   const { symbol, timeframe } = req.params
   const s = symbol && symbol.toUpperCase()
-  const t = symbol && timeframe.toLowerCase()
+  const t = timeframe && timeframe.toLowerCase()
 
   if (!s || !t || !validTimeFrames.includes(t)) {
     return res.send(400, 'Error parsing request')
