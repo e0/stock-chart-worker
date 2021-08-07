@@ -25,8 +25,8 @@ API.add('GET', '/chart-data/:symbol', async (req, res) => {
 
 const validTimeFrames = ['daily', 'weekly', 'monthly']
 
-API.add('POST', '/images/:symbol/:timeframe', async (req, res) => {
-  const { symbol, timeframe } = req.params
+API.add('POST', '/images/:symbol/:timeframe/:dateString', async (req, res) => {
+  const { symbol, timeframe, dateString } = req.params
   const s = symbol && symbol.toUpperCase()
   const t = timeframe && timeframe.toLowerCase()
 
@@ -36,13 +36,13 @@ API.add('POST', '/images/:symbol/:timeframe', async (req, res) => {
     return res.send(400, 'Error parsing request')
   }
 
-  await uploadImage(s, t, image)
+  await uploadImage(s, t, dateString, image)
 
   res.send(200)
 })
 
-API.add('GET', '/images/:symbol/:timeframe', async (req, res) => {
-  const { symbol, timeframe } = req.params
+API.add('GET', '/images/:symbol/:timeframe/:dateString', async (req, res) => {
+  const { symbol, timeframe, dateString } = req.params
   const s = symbol && symbol.toUpperCase()
   const t = timeframe && timeframe.toLowerCase()
 
@@ -50,7 +50,7 @@ API.add('GET', '/images/:symbol/:timeframe', async (req, res) => {
     return res.send(400, 'Error parsing request')
   }
 
-  const image = await getImage(s, t)
+  const image = await getImage(s, t, dateString)
   image ? res.send(200, image) : res.send(404)
 })
 
