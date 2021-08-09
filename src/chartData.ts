@@ -1,4 +1,10 @@
-import { roundTo, secondsUntilNextWeekday, formatNumber, getWeek } from './util'
+import {
+  roundTo,
+  secondsUntilNextWeekday,
+  shouldTryToRefresh,
+  formatNumber,
+  getWeek,
+} from './util'
 
 declare const STOCK_CHART_KV: KVNamespace
 declare const AV_API_KEY: string
@@ -20,10 +26,15 @@ const calculateDollarVol = (series: any) => {
 }
 
 const loadChartData = async (symbol: string) => {
-  const cached = await STOCK_CHART_KV.get(symbol)
+  const cachedString = await STOCK_CHART_KV.get(symbol)
 
-  if (cached) {
-    return JSON.parse(cached)
+  if (cachedString) {
+    const cachedData = JSON.parse(cachedString)
+    const { daily } = cachedData.timeseries
+    const latestDailyTimestamp = daily[daily.length - 1][5]
+    if (!shouldTryToRefresh(latestDailyTimestamp)) {
+      return cachedData
+    }
   }
 
   const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol=${symbol}&outputsize=full&apikey=${AV_API_KEY}`

@@ -13,6 +13,18 @@ const secondsUntilNextWeekday = () => {
   return (Number(then) - Number(now)) / 1000
 }
 
+const shouldTryToRefresh = (timestamp: number) => {
+  const inRefreshTimeframe = secondsUntilNextWeekday() < 7.5 * 60 * 60 // 16:30 - 00:00
+
+  if (!inRefreshTimeframe) {
+    return
+  }
+  const date = new Date(timestamp).getDate()
+  const currentDate = new Date().getDate()
+
+  return date !== currentDate
+}
+
 const formatNumber = (n: number) => {
   const num = Number(n)
 
@@ -41,4 +53,10 @@ const getWeek = (_d: Date) => {
   return Math.ceil(((+d - +yearStart) / 86400000 + 1) / 7)
 }
 
-export { roundTo, secondsUntilNextWeekday, formatNumber, getWeek }
+export {
+  roundTo,
+  secondsUntilNextWeekday,
+  shouldTryToRefresh,
+  formatNumber,
+  getWeek,
+}
