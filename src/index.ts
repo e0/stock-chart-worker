@@ -23,7 +23,7 @@ API.add('GET', '/chart-data/:symbol', async (req, res) => {
   res.send(200, chartData)
 })
 
-const validTimeFrames = ['daily', 'weekly', 'monthly']
+const validTimeFrames = ['daily', 'weekly', 'monthly', 'hourly']
 
 API.add('POST', '/images/:symbol/:timeframe/:dateString', async (req, res) => {
   const { symbol, timeframe, dateString } = req.params
