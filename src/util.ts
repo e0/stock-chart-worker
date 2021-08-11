@@ -53,10 +53,26 @@ const getWeek = (_d: Date) => {
   return Math.ceil(((+d - +yearStart) / 86400000 + 1) / 7)
 }
 
+const parseDate = (dateString: string, timeZone: string) => {
+  const [date, time] = dateString.split(' ')
+  const [y, m, d] = date.split('-').map((x) => parseInt(x))
+  const [hr, min, sec] = time
+    ? time.split(':').map((x) => parseInt(x))
+    : [16, 0, 0]
+
+  let _date = new Date(Date.UTC(y, m - 1, d, hr, min, sec))
+  let utcDate = new Date(_date.toLocaleString('en-US', { timeZone: 'UTC' }))
+  let tzDate = new Date(_date.toLocaleString('en-US', { timeZone }))
+  let offset = utcDate.getTime() - tzDate.getTime()
+  _date.setTime(_date.getTime() + offset)
+  return _date
+}
+
 export {
   roundTo,
   secondsUntilNextWeekday,
   shouldTryToRefresh,
   formatNumber,
   getWeek,
+  parseDate,
 }

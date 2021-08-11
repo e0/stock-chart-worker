@@ -4,10 +4,13 @@ import {
   shouldTryToRefresh,
   formatNumber,
   getWeek,
+  parseDate,
 } from './util'
 
 declare const STOCK_CHART_KV: KVNamespace
 declare const AV_API_KEY: string
+
+const AV_API_URL = `https://www.alphavantage.co/query?apikey=${AV_API_KEY}`
 
 // const dailyData = [o, h, l, c, v, t]
 const calculateAdrPct = (series: any) => {
@@ -25,7 +28,7 @@ const calculateDollarVol = (series: any) => {
   return formatNumber(dollarVol)
 }
 
-const loadChartData = async (symbol: string) => {
+const _loadChartData = async (symbol: string) => {
   const cachedString = await STOCK_CHART_KV.get(symbol)
 
   if (cachedString) {
@@ -37,13 +40,14 @@ const loadChartData = async (symbol: string) => {
     }
   }
 
-  const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol=${symbol}&outputsize=full&apikey=${AV_API_KEY}`
+  const url = `${AV_API_URL}&function=TIME_SERIES_DAILY_ADJUSTED&symbol=${symbol}&outputsize=full`
   const response = await fetch(url)
   const data = await response.json()
+  const timeZone = data['Meta Data']['5. Time Zone']
   const timeSeriesDaily = data['Time Series (Daily)']
 
   const seriesDaily = Object.keys(timeSeriesDaily)
-    .map((d) => ({ ...timeSeriesDaily[d], date: new Date(d) }))
+    .map((d) => ({ ...timeSeriesDaily[d], date: parseDate(d, timeZone) }))
     .reverse()
 
   const daily = []
@@ -114,6 +118,68 @@ const loadChartData = async (symbol: string) => {
     },
     adrPct: calculateAdrPct(daily),
     dollarVol: calculateDollarVol(daily),
+  }
+
+  await STOCK_CHART_KV.put(symbol, JSON.stringify(chartData), {
+    expirationTtl: secondsUntilNextWeekday(),
+  })
+
+  return chartData
+}
+
+const loadHourlyData = async (symbol: string) => {
+  const url = `${AV_API_URL}&function=TIME_SERIES_INTRADAY&symbol=${symbol}&interval=60min&outputsize=full`
+  const response = await fetch(url)
+  const data = await response.json()
+  const timeZone = data['Meta Data']['6. Time Zone']
+  const timeSeriesHourly = data['Time Series (60min)']
+
+  const seriesHourly = Object.keys(timeSeriesHourly)
+    .map((d) => ({ ...timeSeriesHourly[d], date: parseDate(d, timeZone) }))
+    .reverse()
+
+  const hourly = []
+
+  // 1. loop through the hourly timeseries
+  // 2. reformat data
+  for (let d of seriesHourly) {
+    const o = roundTo(parseFloat(d['1. open']))
+    const h = roundTo(parseFloat(d['2. high']))
+    const l = roundTo(parseFloat(d['3. low']))
+    const c = roundTo(parseFloat(d['4. close']))
+    const v = roundTo(parseFloat(d['5. volume']))
+    const t = d.date.getTime()
+
+    const hourlyData = [o, h, l, c, v, t]
+    hourly.push(hourlyData)
+  }
+
+  return hourly
+}
+
+const loadChartData = async (symbol: string) => {
+  const cachedString = await STOCK_CHART_KV.get(symbol)
+
+  if (cachedString) {
+    const cachedData = JSON.parse(cachedString)
+    const { daily } = cachedData.timeseries
+    const latestDailyTimestamp = daily[daily.length - 1][5]
+    if (!shouldTryToRefresh(latestDailyTimestamp)) {
+      return cachedData
+    }
+  }
+
+  const [_chartData, hourly] = await Promise.all([
+    _loadChartData(symbol),
+    loadHourlyData(symbol),
+  ])
+
+  const chartData = {
+    ..._chartData,
+    timeseries: {
+      ..._chartData.timeseries,
+      hourly,
+    },
   }
 
   await STOCK_CHART_KV.put(symbol, JSON.stringify(chartData), {
