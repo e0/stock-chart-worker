@@ -16,14 +16,18 @@ const AV_API_URL = `https://www.alphavantage.co/query?apikey=${AV_API_KEY}`
 const calculateAdrPct = (series: any) => {
   const candles = series.slice(series.length - 20, series.length)
   const adr =
-    candles.reduce((total: number, d: any) => total + d[1] / d[2], 0) / 20 - 1
+    candles.reduce((total: number, d: any) => total + d[1] / d[2], 0) /
+      candles.length -
+    1
   return parseFloat((100 * adr).toFixed(2))
 }
 
 const calculateDollarVol = (series: any) => {
   const candles = series.slice(series.length - 5, series.length)
-  const dollar = candles.reduce((total: number, d: any) => total + d[3], 0) / 5
-  const vol = candles.reduce((total: number, d: any) => total + d[4], 0) / 5
+  const dollar =
+    candles.reduce((total: number, d: any) => total + d[3], 0) / candles.length
+  const vol =
+    candles.reduce((total: number, d: any) => total + d[4], 0) / candles.length
   const dollarVol = dollar * vol
   return formatNumber(dollarVol)
 }
