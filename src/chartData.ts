@@ -1,16 +1,12 @@
 import {
-  roundTo,
   secondsUntilNextWeekday,
   shouldTryToRefresh,
   formatNumber,
   getWeek,
-  parseDate,
 } from './util'
+import { getDailyData, getHourlyData } from './dataProviders/fmp'
 
 declare const STOCK_CHART_KV: KVNamespace
-declare const AV_API_KEY: string
-
-const AV_API_URL = `https://www.alphavantage.co/query?apikey=${AV_API_KEY}`
 
 // const dailyData = [o, h, l, c, v, t]
 const calculateAdrPct = (series: any) => {
@@ -44,40 +40,19 @@ const _loadChartData = async (symbol: string) => {
     }
   }
 
-  const url = `${AV_API_URL}&function=TIME_SERIES_DAILY_ADJUSTED&symbol=${symbol}&outputsize=full`
-  const response = await fetch(url)
-  const data = await response.json()
-  const timeZone = data['Meta Data']['5. Time Zone']
-  const timeSeriesDaily = data['Time Series (Daily)']
-
-  const seriesDaily = Object.keys(timeSeriesDaily)
-    .map((d) => ({ ...timeSeriesDaily[d], date: parseDate(d, timeZone) }))
-    .reverse()
-
-  const daily = []
+  const daily = await getDailyData(symbol)
   const weekly = []
   const monthly = []
 
   let week, month
 
   // 1. loop through the daily timeseries
-  // 2. reformat data
-  // 3. populate daily, weekly, and monthly series
-  for (let d of seriesDaily) {
-    const close = roundTo(parseFloat(d['4. close']))
-    const ratio = roundTo(parseFloat(d['5. adjusted close']) / close)
+  // 2. populate weekly, and monthly series
+  for (let dailyData of daily) {
+    const [_o, h, l, c, v, t] = dailyData
+    const date = new Date(t)
 
-    const o = roundTo(parseFloat(d['1. open']) * ratio)
-    const h = roundTo(parseFloat(d['2. high']) * ratio)
-    const l = roundTo(parseFloat(d['3. low']) * ratio)
-    const c = close * ratio
-    const v = roundTo(parseFloat(d['6. volume']))
-    const t = d.date.getTime()
-
-    const dailyData = [o, h, l, c, v, t]
-    daily.push(dailyData)
-
-    const currentWeek = getWeek(d.date)
+    const currentWeek = getWeek(date)
     if (currentWeek !== week) {
       // if new week
       weekly[weekly.length] = dailyData
@@ -95,7 +70,7 @@ const _loadChartData = async (symbol: string) => {
       ]
     }
 
-    const currentMonth = d.date.getMonth()
+    const currentMonth = date.getMonth()
     if (currentMonth !== month) {
       // if new month
       monthly[monthly.length] = dailyData
@@ -131,35 +106,7 @@ const _loadChartData = async (symbol: string) => {
   return chartData
 }
 
-const loadHourlyData = async (symbol: string) => {
-  const url = `${AV_API_URL}&function=TIME_SERIES_INTRADAY&symbol=${symbol}&interval=60min&outputsize=full`
-  const response = await fetch(url)
-  const data = await response.json()
-  const timeZone = data['Meta Data']['6. Time Zone']
-  const timeSeriesHourly = data['Time Series (60min)']
-
-  const seriesHourly = Object.keys(timeSeriesHourly)
-    .map((d) => ({ ...timeSeriesHourly[d], date: parseDate(d, timeZone) }))
-    .reverse()
-
-  const hourly = []
-
-  // 1. loop through the hourly timeseries
-  // 2. reformat data
-  for (let d of seriesHourly) {
-    const o = roundTo(parseFloat(d['1. open']))
-    const h = roundTo(parseFloat(d['2. high']))
-    const l = roundTo(parseFloat(d['3. low']))
-    const c = roundTo(parseFloat(d['4. close']))
-    const v = roundTo(parseFloat(d['5. volume']))
-    const t = d.date.getTime()
-
-    const hourlyData = [o, h, l, c, v, t]
-    hourly.push(hourlyData)
-  }
-
-  return hourly
-}
+const loadHourlyData = async (symbol: string) => getHourlyData(symbol)
 
 const loadChartData = async (symbol: string) => {
   const cachedString = await STOCK_CHART_KV.get(symbol)

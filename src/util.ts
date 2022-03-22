@@ -53,7 +53,7 @@ const getWeek = (_d: Date) => {
   return Math.ceil(((+d - +yearStart) / 86400000 + 1) / 7)
 }
 
-const parseDate = (dateString: string, timeZone: string) => {
+const parseDate = (dateString: string, timeZone: string = 'US/Eastern') => {
   const [date, time] = dateString.split(' ')
   const [y, m, d] = date.split('-').map((x) => parseInt(x))
   const [hr, min, sec] = time
