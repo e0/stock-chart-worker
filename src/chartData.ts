@@ -4,7 +4,7 @@ import {
   formatNumber,
   getWeek,
 } from './util'
-import { getDailyData, getHourlyData } from './dataProviders/alphavantage'
+import { getDailyData, getHourlyData } from './dataProviders/fmp'
 
 declare const STOCK_CHART_KV: KVNamespace
 
