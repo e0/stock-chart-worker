@@ -4,13 +4,10 @@ import {
   shouldTryToRefresh,
   formatNumber,
   getWeek,
-  parseDate,
 } from './util'
+import { getChartData } from './dataProviders/alphavantage'
 
 declare const STOCK_CHART_KV: KVNamespace
-declare const AV_API_KEY: string
-
-const AV_API_URL = `https://www.alphavantage.co/query?apikey=${AV_API_KEY}`
 
 // const dailyData = [o, h, l, c, v, t]
 const calculateAdrPct = (series: any) => {
@@ -44,16 +41,7 @@ const _loadChartData = async (symbol: string) => {
     }
   }
 
-  const url = `${AV_API_URL}&function=TIME_SERIES_DAILY_ADJUSTED&symbol=${symbol}&outputsize=full`
-  const response = await fetch(url)
-  const data = await response.json()
-  const timeZone = data['Meta Data']['5. Time Zone']
-  const timeSeriesDaily = data['Time Series (Daily)']
-
-  const seriesDaily = Object.keys(timeSeriesDaily)
-    .map((d) => ({ ...timeSeriesDaily[d], date: parseDate(d, timeZone) }))
-    .reverse()
-
+  const seriesDaily = await getChartData(symbol, 'daily')
   const daily = []
   const weekly = []
   const monthly = []
@@ -132,15 +120,7 @@ const _loadChartData = async (symbol: string) => {
 }
 
 const loadHourlyData = async (symbol: string) => {
-  const url = `${AV_API_URL}&function=TIME_SERIES_INTRADAY&symbol=${symbol}&interval=60min&outputsize=full`
-  const response = await fetch(url)
-  const data = await response.json()
-  const timeZone = data['Meta Data']['6. Time Zone']
-  const timeSeriesHourly = data['Time Series (60min)']
-
-  const seriesHourly = Object.keys(timeSeriesHourly)
-    .map((d) => ({ ...timeSeriesHourly[d], date: parseDate(d, timeZone) }))
-    .reverse()
+  const seriesHourly = await getChartData(symbol, 'hourly')
 
   const hourly = []
 
