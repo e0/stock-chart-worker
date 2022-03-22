@@ -6,12 +6,12 @@ Cloudflare worker for stock timeseries data.
 
 - Cloudflare account
 - [Wrangler](https://developers.cloudflare.com/workers/cli-wrangler)
-- [yarn](https://yarnpkg.com)
+- [pnpm](https://pnpm.io)
 - [Alpha Vantage](https://www.alphavantage.co)
 
 ## Get started
 
-1. Install dependencies: `yarn`
+1. Install dependencies: `pnpm`
 2. Set Cloudflare account ID: `wrangler secret put CF_ACCOUNT_ID`
 3. Set Cloudflare zone ID: `wrangler secret put CF_ZONE_ID`
 4. Create Cloudflare Worker KV: `wrangler kv:namespace create "STOCK_CHART_KV"`

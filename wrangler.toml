@@ -4,12 +4,13 @@ zone_id = ""
 account_id = ""
 route = ""
 workers_dev = true
+compatibility_date = "2022-03-22"
 
 kv_namespaces = [
 	 { binding = "STOCK_CHART_KV", id = "eb233bb60c1d4991ad25f6bd7d7d4e28", preview_id = "eb233bb60c1d4991ad25f6bd7d7d4e28" }
 ]
 [build]
-command = "yarn install && yarn build"
+command = "pnpm install && pnpm build"
 [build.upload]
 format = "service-worker"
 
